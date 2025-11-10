@@ -1,0 +1,80 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-screen bg-slate-50">
+  <header class="bg-white shadow">
+    <div class="max-w-5xl mx-auto px-4 py-4 flex justify-between">
+      <h1 class="text-2xl font-bold">Dashboard</h1>
+      <nav class="flex items-center gap-3">
+        <a class="text-blue-600" href="http://localhost:5173" target="_blank">View Site</a>
+        <a class="bg-blue-600 text-white rounded px-3 py-1" href="/new-post.html">New Post</a> <!-- ✅ fixed link -->
+        <button id="logout" class="text-slate-600">Logout</button>
+      </nav>
+    </div>
+  </header>
+
+  <main class="max-w-5xl mx-auto px-4 py-8">
+    <div id="posts" class="grid gap-4"></div>
+  </main>
+
+  <script type="module">
+    import { api, requireLogin } from './js/api.js';
+    requireLogin();
+
+    async function load() {
+      const posts = await api('/posts/admin/all');
+      const container = document.getElementById('posts');
+      container.innerHTML = posts.map(p => `
+        <div class="bg-white rounded-2xl p-6 shadow flex items-start justify-between">
+          <div>
+            <div class="text-sm ${p.published ? 'text-green-600' : 'text-orange-600'}">
+              ${p.published ? 'Published' : 'Unpublished'}
+            </div>
+            <a class="block" href="/edit-post.html?id=${p.id}">
+              <h2 class="text-xl font-semibold">${p.title}</h2>
+            </a>
+            <div class="text-sm text-slate-500">${new Date(p.createdAt).toLocaleString()}</div>
+          </div>
+          <div class="flex gap-2">
+            <button data-id="${p.id}" data-action="toggle" class="px-3 py-2 rounded bg-slate-100">
+              ${p.published ? 'Unpublish' : 'Publish'}
+            </button>
+            <button data-id="${p.id}" data-action="delete" class="px-3 py-2 rounded bg-red-600 text-white">
+              Delete
+            </button>
+          </div>
+        </div>
+      `).join('');
+
+      container.addEventListener('click', async (e) => {
+        const btn = e.target.closest('button');
+        if (!btn) return;
+        const id = btn.dataset.id;
+        const action = btn.dataset.action;
+        if (action === 'toggle') {
+          await api(`/posts/admin/${id}/publish`, { method: 'PATCH' });
+          load();
+        } else if (action === 'delete') {
+          if (confirm('Delete this post?')) {
+            await api(`/posts/admin/${id}`, { method: 'DELETE' });
+            load();
+          }
+        }
+      });
+    }
+
+    document.getElementById('logout').onclick = () => {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      location.href = '/index.html'; // ✅ fixed redirect
+    };
+
+    load();
+  </script>
+</body>
+</html>

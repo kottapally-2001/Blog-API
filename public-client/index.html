@@ -1,0 +1,33 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>My Blog</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-screen bg-slate-50">
+  <header class="bg-white shadow sticky top-0 z-10">
+    <div class="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
+      <h1 class="text-2xl font-bold">My Blog</h1>
+      <a href="http://localhost:5174/index.html" target="_blank">Author Login</a>
+    </div>
+  </header>
+  <main class="max-w-5xl mx-auto px-4 py-8">
+    <div id="posts" class="grid gap-4"></div>
+  </main>
+  <script type="module">
+    import { api } from './js/api.js';
+    const postsEl = document.getElementById('posts');
+    const posts = await api('/posts');
+    postsEl.innerHTML = posts.map(p => `
+      <article class="bg-white rounded-2xl p-6 shadow">
+        <a class="block" href="/public-client/post.html?slug=${p.slug}">
+          <h2 class="text-xl font-semibold">${p.title}</h2>
+          <p class="text-sm text-slate-500 mt-1">${new Date(p.createdAt).toLocaleString()}</p>
+        </a>
+      </article>`
+    ).join('');
+  </script>
+</body>
+</html>
